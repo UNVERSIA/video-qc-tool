@@ -1,4 +1,4 @@
-name: Build VideoQC with Nuitka (Final Fix)
+name: Build VideoQC Final Debug
 
 on: [push]
 
@@ -27,7 +27,7 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      # --- 3. Nuitka 打包 (生成的软件会在根目录) ---
+      # --- 3. Nuitka 打包 ---
       
       # Windows
       - name: Build on Windows
@@ -65,12 +65,21 @@ jobs:
           include-data-dir: static=static
           output-file: VideoQC_Mac.bin
 
-      # --- 4. 上传结果 (修正路径) ---
+      # --- 4. 关键步骤：打印所有文件列表 (调试用) ---
+      # 如果上传又失败了，请查看这一步的日志，就能看到文件到底在哪
+      - name: List files (Debug)
+        shell: bash
+        run: |
+          echo "Current directory structure:"
+          find . -maxdepth 3 -not -path '*/.*'
+
+      # --- 5. 上传结果 (使用递归搜索) ---
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: VideoQC-${{ matrix.os }}
-          # 关键修改：去掉了 'build/' 前缀，直接找后缀名
+          # 使用 ** 代表递归搜索所有子目录
+          # 这样无论文件在 build/ 里还是在根目录，都能找到
           path: |
-            *.exe
-            *.bin
+            **/*.exe
+            **/*.bin
