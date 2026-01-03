@@ -1,0 +1,50 @@
+name: Build VideoQC App
+
+on: [push]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # 同时在三个系统上运行
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    # --- 关键修改：强制使用 Python 3.8 以兼容 Windows 7 ---
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8' 
+        
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    # --- Windows 打包命令 (分隔符用 ;) ---
+    - name: Build EXE (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        pyinstaller --noconfirm --onefile --windowed --add-data "static;static" --name "VideoQC_Win7_10_11" app.py
+
+    # --- Linux 打包命令 (分隔符用 :) ---
+    - name: Build Binary (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        pyinstaller --noconfirm --onefile --windowed --add-data "static:static" --name "VideoQC_Linux" app.py
+
+    # --- macOS 打包命令 (分隔符用 :) ---
+    - name: Build App (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        pyinstaller --noconfirm --onefile --windowed --add-data "static:static" --name "VideoQC_Mac" app.py
+
+    # --- 上传结果 ---
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: VideoQC-${{ matrix.os }}
+        path: dist/
