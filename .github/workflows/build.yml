@@ -1,4 +1,4 @@
-name: Build VideoQC with Nuitka
+name: Build VideoQC with Nuitka (Win7 Compatible)
 
 on: [push]
 
@@ -9,34 +9,29 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-      fail-fast: false  # 如果一个平台失败，不要取消其他平台的任务
+      fail-fast: false
 
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
+      # --- 关键修改：统一使用 Python 3.8 以兼容 Windows 7 ---
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9' # Nuitka 推荐使用 3.9+
+          python-version: '3.8' 
           cache: 'pip'
 
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          # 确保安装 Nuitka
           pip install nuitka ordered-set
 
-      # --- Windows 打包 ---
+      # --- Windows 打包 (Nuitka + Python 3.8 = Win7 Support) ---
       - name: Build on Windows
         if: matrix.os == 'windows-latest'
         run: |
-          # Nuitka 命令参数详解:
-          # --standalone: 独立运行包
-          # --onefile: 生成单文件exe
-          # --enable-plugin=tk-inter: 必须开启，否则无法使用弹窗
-          # --include-data-dir: 包含静态资源 (格式 源路径=目标路径)
-          python -m nuitka --standalone --onefile --enable-plugin=tk-inter --include-data-dir=static=static --output-dir=dist --output-filename=VideoQC_Win.exe app.py
+          python -m nuitka --standalone --onefile --enable-plugin=tk-inter --include-data-dir=static=static --output-dir=dist --output-filename=VideoQC_Win7.exe app.py
 
       # --- Linux 打包 ---
       - name: Build on Linux
