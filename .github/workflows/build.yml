@@ -1,4 +1,4 @@
-name: Build VideoQC with Nuitka (Fixed)
+name: Build VideoQC with Nuitka (Final Fix)
 
 on: [push]
 
@@ -15,62 +15,62 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      # --- 1. 设置 Python 3.8 (确保 Win7 兼容) ---
+      # --- 1. 设置 Python 3.8 (Win7 兼容) ---
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.8'
           cache: 'pip'
 
-      # --- 2. 安装项目依赖 ---
+      # --- 2. 安装依赖 ---
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
 
-      # --- 3. 使用官方 Nuitka Action (新版参数写法) ---
+      # --- 3. Nuitka 打包 (生成的软件会在根目录) ---
       
-      # Windows 打包
+      # Windows
       - name: Build on Windows
         if: matrix.os == 'windows-latest'
         uses: Nuitka/Nuitka-Action@main
         with:
           nuitka-version: main
           script-name: app.py
-          # --- 关键修改：旧的 onefile: true 改为 mode: onefile ---
           mode: onefile
           enable-plugins: tk-inter
           include-data-dir: static=static
           output-file: VideoQC_Win7.exe
 
-      # Linux 打包
+      # Linux
       - name: Build on Linux
         if: matrix.os == 'ubuntu-latest'
         uses: Nuitka/Nuitka-Action@main
         with:
           nuitka-version: main
           script-name: app.py
-          # --- 关键修改 ---
           mode: onefile
           enable-plugins: tk-inter
           include-data-dir: static=static
           output-file: VideoQC_Linux.bin
 
-      # macOS 打包
+      # macOS
       - name: Build on macOS
         if: matrix.os == 'macos-latest'
         uses: Nuitka/Nuitka-Action@main
         with:
           nuitka-version: main
           script-name: app.py
-          # --- 关键修改 ---
           mode: onefile
           enable-plugins: tk-inter
           include-data-dir: static=static
           output-file: VideoQC_Mac.bin
 
-      # --- 4. 上传打包结果 ---
+      # --- 4. 上传结果 (修正路径) ---
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: VideoQC-${{ matrix.os }}
-          path: build/*.{exe,bin}
+          # 关键修改：去掉了 'build/' 前缀，直接找后缀名
+          path: |
+            *.exe
+            *.bin
