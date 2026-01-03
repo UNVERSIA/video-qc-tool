@@ -4,7 +4,7 @@ import cv2
 import json
 import datetime
 import re
-import socket  # 新增：用于检测端口
+import socket  
 import threading
 import webbrowser
 from threading import Timer
@@ -36,19 +36,17 @@ STANDARDS = {
 HISTORY_FILE = 'qc_history_db.json'
 
 
-# --- 新增功能：自动寻找空闲端口 (解决 "It works" 冲突) ---
 def find_free_port(start_port=5000):
     """从 start_port 开始寻找一个未被占用的端口"""
     port = start_port
     while port < 65535:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            # 尝试连接该端口，result != 0 表示连接失败（即端口空闲）
             result = sock.connect_ex(('127.0.0.1', port))
             if result != 0:
                 return port
             else:
-                port += 1  # 端口被占，尝试下一个
-    return 5000  # 如果全失败（极小概率），回退到5000
+                port += 1  
+    return 5000  
 
 
 # 后端
@@ -502,7 +500,6 @@ def api_scan():
     })
 
 
-# --- 修改后的启动逻辑 ---
 def open_browser(port):
     webbrowser.open_new(f'http://127.0.0.1:{port}/')
 
@@ -510,14 +507,13 @@ def open_browser(port):
 if __name__ == '__main__':
     if not os.path.exists('static'): os.makedirs('static')
 
-    # 1. 自动寻找空闲端口（避开 5000 端口）
+    # 寻找空闲端口
     port = find_free_port(5555)
 
     print(f"系统启动中... 请访问 http://127.0.0.1:{port}")
 
-    # 2. 延迟 1.5 秒打开浏览器，并传入动态端口
     if not os.environ.get("WERKZEUG_RUN_MAIN"):
         Timer(1.5, open_browser, [port]).start()
 
-    # 3. 使用找到的空闲端口启动服务
     app.run(host='0.0.0.0', port=port, debug=False)
+
