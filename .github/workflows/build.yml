@@ -1,4 +1,4 @@
-name: Build VideoQC with Nuitka (Stable)
+name: Build VideoQC with Nuitka (Fixed)
 
 on: [push]
 
@@ -26,10 +26,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          # Nuitka Action 会自己处理 Nuitka 的安装，这里只需要装你项目的库
 
-      # --- 3. 使用官方 Nuitka Action 进行打包 ---
-      # 这个 Action 会自动处理编译器的下载和配置，解决 Exit code 1 问题
+      # --- 3. 使用官方 Nuitka Action (新版参数写法) ---
       
       # Windows 打包
       - name: Build on Windows
@@ -38,8 +36,8 @@ jobs:
         with:
           nuitka-version: main
           script-name: app.py
-          onefile: true
-          standalone: true
+          # --- 关键修改：旧的 onefile: true 改为 mode: onefile ---
+          mode: onefile
           enable-plugins: tk-inter
           include-data-dir: static=static
           output-file: VideoQC_Win7.exe
@@ -51,8 +49,8 @@ jobs:
         with:
           nuitka-version: main
           script-name: app.py
-          onefile: true
-          standalone: true
+          # --- 关键修改 ---
+          mode: onefile
           enable-plugins: tk-inter
           include-data-dir: static=static
           output-file: VideoQC_Linux.bin
@@ -64,8 +62,8 @@ jobs:
         with:
           nuitka-version: main
           script-name: app.py
-          onefile: true
-          standalone: true
+          # --- 关键修改 ---
+          mode: onefile
           enable-plugins: tk-inter
           include-data-dir: static=static
           output-file: VideoQC_Mac.bin
@@ -75,5 +73,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: VideoQC-${{ matrix.os }}
-          path: build/*.{exe,bin} 
-          # 注意：Nuitka Action 默认把结果放在 build 文件夹里
+          path: build/*.{exe,bin}
