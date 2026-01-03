@@ -1,3 +1,4 @@
 flask
 opencv-python-headless
-pyinstaller
+nuitka
+zstandard  # Nuitka 依赖这个进行压缩
