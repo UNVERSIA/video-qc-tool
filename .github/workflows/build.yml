@@ -1,4 +1,4 @@
-name: Build VideoQC App
+name: Build VideoQC with Nuitka
 
 on: [push]
 
@@ -8,44 +8,51 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # 同时在三个系统上运行
         os: [windows-latest, ubuntu-latest, macos-latest]
+      fail-fast: false  # 如果一个平台失败，不要取消其他平台的任务
 
     steps:
-    - uses: actions/checkout@v4  # 已更新为 v4
-    
-    # --- 强制使用 Python 3.8 以兼容 Windows 7 ---
-    - name: Set up Python
-      uses: actions/setup-python@v5  # 已更新为 v5
-      with:
-        python-version: '3.8' 
-        
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
+      - name: Check out code
+        uses: actions/checkout@v4
 
-    # --- Windows 打包命令 (分隔符用 ;) ---
-    - name: Build EXE (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        pyinstaller --noconfirm --onefile --windowed --add-data "static;static" --name "VideoQC_Win7_10_11" app.py
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9' # Nuitka 推荐使用 3.9+
+          cache: 'pip'
 
-    # --- Linux 打包命令 (分隔符用 :) ---
-    - name: Build Binary (Linux)
-      if: runner.os == 'Linux'
-      run: |
-        pyinstaller --noconfirm --onefile --windowed --add-data "static:static" --name "VideoQC_Linux" app.py
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          # 确保安装 Nuitka
+          pip install nuitka ordered-set
 
-    # --- macOS 打包命令 (分隔符用 :) ---
-    - name: Build App (macOS)
-      if: runner.os == 'macOS'
-      run: |
-        pyinstaller --noconfirm --onefile --windowed --add-data "static:static" --name "VideoQC_Mac" app.py
+      # --- Windows 打包 ---
+      - name: Build on Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          # Nuitka 命令参数详解:
+          # --standalone: 独立运行包
+          # --onefile: 生成单文件exe
+          # --enable-plugin=tk-inter: 必须开启，否则无法使用弹窗
+          # --include-data-dir: 包含静态资源 (格式 源路径=目标路径)
+          python -m nuitka --standalone --onefile --enable-plugin=tk-inter --include-data-dir=static=static --output-dir=dist --output-filename=VideoQC_Win.exe app.py
 
-    # --- 上传结果 (已修复：升级到 v4) ---
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: VideoQC-${{ matrix.os }}
-        path: dist/
-        # v4 版本默认不压缩，为了方便下载，我们保持默认即可，GitHub 界面下载时会自动打包成 zip
+      # --- Linux 打包 ---
+      - name: Build on Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          python -m nuitka --standalone --onefile --enable-plugin=tk-inter --include-data-dir=static=static --output-dir=dist --output-filename=VideoQC_Linux app.py
+
+      # --- macOS 打包 ---
+      - name: Build on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          python -m nuitka --standalone --onefile --enable-plugin=tk-inter --include-data-dir=static=static --output-dir=dist --output-filename=VideoQC_Mac app.py
+
+      # --- 上传结果 ---
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: VideoQC-${{ matrix.os }}
+          path: dist/
