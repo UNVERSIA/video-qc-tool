@@ -12,12 +12,14 @@ import tkinter as tk
 from tkinter import filedialog
 from flask import Flask, render_template_string, request, jsonify, session, redirect
 
+
 def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
+
 
 app = Flask(__name__, static_folder=resource_path('static'))
 app.secret_key = 'video_qc_secret_key_2025'
@@ -33,6 +35,7 @@ STANDARDS = {
 }
 HISTORY_FILE = 'qc_history_db.json'
 
+
 # --- 新增功能：自动寻找空闲端口 (解决 "It works" 冲突) ---
 def find_free_port(start_port=5000):
     """从 start_port 开始寻找一个未被占用的端口"""
@@ -46,6 +49,7 @@ def find_free_port(start_port=5000):
             else:
                 port += 1  # 端口被占，尝试下一个
     return 5000  # 如果全失败（极小概率），回退到5000
+
 
 # 后端
 def load_history():
@@ -414,9 +418,11 @@ HTML_TEMPLATE = """
 </html>
 """
 
+
 # 路由
 @app.route('/', methods=['GET', 'POST'])
 def index(): return render_template_string(HTML_TEMPLATE, show_history=False)
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -426,8 +432,10 @@ def login():
         return redirect('/')
     return render_template_string(HTML_TEMPLATE, error="ID 不能为空")
 
+
 @app.route('/logout')
 def logout(): session.clear(); return redirect('/')
+
 
 @app.route('/history')
 def history():
@@ -436,11 +444,13 @@ def history():
     user_data = [d for d in all_data if d['user'] == session['user']]
     return render_template_string(HTML_TEMPLATE, show_history=True, history_data=reversed(user_data))
 
+
 @app.route('/api/browse_folder')
 def api_browse_folder():
     path = open_folder_dialog()
     if path: path = path.replace('\\', '/')
     return jsonify({'path': path})
+
 
 @app.route('/api/scan', methods=['POST'])
 def api_scan():
@@ -491,18 +501,20 @@ def api_scan():
         'invalid_duration': format_duration(invalid_sec)
     })
 
+
 # --- 修改后的启动逻辑 ---
 def open_browser(port):
     webbrowser.open_new(f'http://127.0.0.1:{port}/')
+
 
 if __name__ == '__main__':
     if not os.path.exists('static'): os.makedirs('static')
 
     # 1. 自动寻找空闲端口（避开 5000 端口）
-    port = find_free_port(5555) 
-    
+    port = find_free_port(5555)
+
     print(f"系统启动中... 请访问 http://127.0.0.1:{port}")
-    
+
     # 2. 延迟 1.5 秒打开浏览器，并传入动态端口
     if not os.environ.get("WERKZEUG_RUN_MAIN"):
         Timer(1.5, open_browser, [port]).start()
