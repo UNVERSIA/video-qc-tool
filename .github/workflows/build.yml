@@ -12,11 +12,11 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4  # 已更新为 v4
     
-    # --- 关键修改：强制使用 Python 3.8 以兼容 Windows 7 ---
+    # --- 强制使用 Python 3.8 以兼容 Windows 7 ---
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5  # 已更新为 v5
       with:
         python-version: '3.8' 
         
@@ -42,9 +42,10 @@ jobs:
       run: |
         pyinstaller --noconfirm --onefile --windowed --add-data "static:static" --name "VideoQC_Mac" app.py
 
-    # --- 上传结果 ---
+    # --- 上传结果 (已修复：升级到 v4) ---
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: VideoQC-${{ matrix.os }}
         path: dist/
+        # v4 版本默认不压缩，为了方便下载，我们保持默认即可，GitHub 界面下载时会自动打包成 zip
