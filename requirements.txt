@@ -1,4 +1,5 @@
 flask
 opencv-python-headless
 nuitka
-zstandard  # Nuitka 依赖这个进行压缩
+zstandard  # Nuitka 
+
